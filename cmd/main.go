@@ -1,8 +1,10 @@
 package main
 
-import "github.com/ch4rl1e5/stream/pkg/buffer"
+import (
+	server2 "github.com/ch4rl1e5/stream/server"
+)
 
 func main() {
-	buf := buffer.NewBuffer()
-	buf.Grow()
+	server := server2.NewServer()
+	server.Start()
 }
