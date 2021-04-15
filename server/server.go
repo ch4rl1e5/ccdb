@@ -43,8 +43,17 @@ func (s *Impl) handle(w http.ResponseWriter, r *http.Request) {
 	ch := make(chan int)
 	go func() {
 		for {
-			size := s.buffer.Len()
+			s.buffer.Grow(4 * 1024)
+			size, err := s.buffer.Read(r)
 			ch <- size
+
+			if err != nil {
+				if err == io.EOF {
+					w.Header().Set("Status", "200 OK")
+					r.Body.Close()
+				}
+				break
+			}
 
 			go func() {
 				size := <- ch
@@ -55,14 +64,6 @@ func (s *Impl) handle(w http.ResponseWriter, r *http.Request) {
 					}
 				}
 			}()
-
-			if err != nil {
-				if err == io.EOF {
-					w.Header().Set("Status", "200 OK")
-					r.Body.Close()
-				}
-				break
-			}
 		}
 	}()
 }
