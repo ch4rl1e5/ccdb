@@ -1,23 +1,23 @@
-package server
+package stream
 
 import (
-	"github.com/ch4rl1e5/stream/pkg/buffer"
+	"github.com/ch4rl1e5/stream/internal/buffer"
 	"io"
 	"log"
 	"net/http"
 )
 
-type Server interface {
+type Stream interface {
 	Start()
 }
 
 type Impl struct {
-	buffer buffer.Buffer
+
 }
 
-func NewServer() Server {
+func NewStream() Stream {
 	return &Impl{
-		buffer: buffer.NewBuffer(),
+
 	}
 }
 
@@ -40,30 +40,38 @@ func (s *Impl) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	ch := make(chan int)
+	errorChannel := make(chan error)
+	offsetChannel := make(chan int)
+	finishedChannel := make(chan bool)
+	bufferPool := buffer.NewPools(buffer.NewBuffer(w, finishedChannel, offsetChannel, errorChannel))
+
 	go func() {
 		for {
-			s.buffer.Grow(4 * 1024)
-			size, err := s.buffer.Read(r)
-			ch <- size
+			bufferPool.OpenFile()
+			bufferPool.Grow()
+			bufferPool.Read()
 
-			if err != nil {
-				if err == io.EOF {
-					w.Header().Set("Status", "200 OK")
-					r.Body.Close()
+			if <- errorChannel != nil {
+				log.Printf("error cause: %v", errorChannel)
+			}
+
+			if <- errorChannel == io.EOF {
+				break
+			}
+		}
+	}()
+
+	go func() {
+		for {
+			bufferPool.Write()
+			if <- finishedChannel {
+				w.Header().Set("Status", "200 OK")
+				err := r.Body.Close()
+				if err != nil {
+					return 
 				}
 				break
 			}
-
-			go func() {
-				size := <- ch
-				if size > 0 {
-					err := s.buffer.Write(w)
-					if err != nil {
-						panic(err)
-					}
-				}
-			}()
 		}
 	}()
 }

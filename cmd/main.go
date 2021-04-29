@@ -1,10 +1,12 @@
 package main
 
 import (
-	server2 "github.com/ch4rl1e5/stream/server"
+	"github.com/ch4rl1e5/stream/internal/config"
+	"github.com/ch4rl1e5/stream/internal/stream"
 )
 
 func main() {
-	server := server2.NewServer()
-	server.Start()
+	config.Init()
+	srv := stream.NewStream()
+	srv.Start()
 }
