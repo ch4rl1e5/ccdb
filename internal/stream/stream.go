@@ -2,7 +2,6 @@ package stream
 
 import (
 	"github.com/ch4rl1e5/stream/internal/buffer"
-	"io"
 	"log"
 	"net/http"
 )
@@ -30,7 +29,7 @@ func (s *Impl) Start() {
 	// run with TLS.
 	// Exactly how you would run an HTTP/1.1 server with TLS connection.
 	log.Printf("Serving on https://0.0.0.0:8000")
-	log.Fatal(srv.ListenAndServe())
+	log.Fatal(srv.ListenAndServeTLS("server.crt", "server.key"))
 }
 
 func (s *Impl) handle(w http.ResponseWriter, r *http.Request) {
@@ -40,38 +39,27 @@ func (s *Impl) handle(w http.ResponseWriter, r *http.Request) {
 		return
 	}
 
-	errorChannel := make(chan error)
-	offsetChannel := make(chan int)
 	finishedChannel := make(chan bool)
-	bufferPool := buffer.NewPools(buffer.NewBuffer(w, finishedChannel, offsetChannel, errorChannel))
+	bufferPool := buffer.NewPools(buffer.NewBuffer(w, *r, finishedChannel))
 
 	go func() {
 		for {
 			bufferPool.OpenFile()
-			bufferPool.Grow()
 			bufferPool.Read()
-
-			if <- errorChannel != nil {
-				log.Printf("error cause: %v", errorChannel)
-			}
-
-			if <- errorChannel == io.EOF {
-				break
-			}
 		}
 	}()
 
 	go func() {
 		for {
 			bufferPool.Write()
-			if <- finishedChannel {
-				w.Header().Set("Status", "200 OK")
-				err := r.Body.Close()
-				if err != nil {
-					return 
-				}
-				break
-			}
 		}
 	}()
+
+	if ! <- finishedChannel {
+		w.Header().Set("Status", "200 OK")
+		err := r.Body.Close()
+		if err != nil {
+			panic(err)
+		}
+	}
 }

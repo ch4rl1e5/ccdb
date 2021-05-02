@@ -16,3 +16,5 @@
 /.idea/
 /testdata/*
 stream.example.yaml
+/server.crt
+/server.key

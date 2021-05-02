@@ -8,14 +8,12 @@ import (
 )
 
 type Pools interface {
-	Grow() []byte
 	Read()
 	OpenFile()
 	Write()
 }
 
 type PoolsImpl struct {
-	grow 			sync.Pool
 	read 			sync.Pool
 	openFile 		sync.Pool
 	write			sync.Pool
@@ -26,17 +24,12 @@ type PoolsImpl struct {
 func NewPools(buf Buffer) Pools {
 	poolsImpl := PoolsImpl{}
 	poolsImpl.buf = buf
-	poolsImpl.grow = sync.Pool{New: buf.Grow()}
 	poolsImpl.read = sync.Pool{New: buf.Read()}
 	poolsImpl.openFile = sync.Pool{New: poolsImpl.openFilePool()}
 	poolsImpl.write = sync.Pool{New: buf.Write()}
 	poolsImpl.clear = sync.Pool{New: buf.Clear()}
 
 	return &poolsImpl
-}
-
-func (p *PoolsImpl) Grow() []byte {
-	return p.grow.Get().([]byte)
 }
 
 func (p *PoolsImpl) Read() {
