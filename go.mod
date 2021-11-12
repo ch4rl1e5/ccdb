@@ -1,8 +1,12 @@
-module github.com/ch4rl1e5/stream
+module github.com/ch4rl1e5/ccdb
 
-go 1.16
+go 1.17
 
 require (
-	github.com/spf13/viper v1.7.1
-	golang.org/x/net v0.0.0-20210525063256-abc453219eb5
+	github.com/ch4rl1e5/go-common v1.0.0 // indirect
+	github.com/google/uuid v1.3.0 // indirect
+	github.com/julienschmidt/httprouter v1.3.0 // indirect
+	go.uber.org/atomic v1.7.0 // indirect
+	go.uber.org/multierr v1.6.0 // indirect
+	go.uber.org/zap v1.19.1 // indirect
 )

@@ -17,4 +17,7 @@
 /testdata/*
 stream.yaml
 /server.crt
-/server.key
+/key.key
+/localhost.crt
+/localhost.key
+/ccdb.iml
